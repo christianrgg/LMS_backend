@@ -1,13 +1,12 @@
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectModel } from "@nestjs/mongoose";
 import { User } from "./entities/user.entity";
 import { Model } from "mongoose";
 import * as bcryptjs from "bcryptjs";
-import { LoginDto } from "./dto/login.dto";
 import { JwtService } from "@nestjs/jwt";
 import { JwtPayload } from "./Interfaces/jwt-payload";
+import { LoginResponse } from "./Interfaces/login-response";
+import { RegisterUserDto, CreateUserDto, UpdateAuthDto, LoginDto  } from "./dto";
 
 @Injectable()
 export class AuthService {
@@ -43,31 +42,34 @@ export class AuthService {
 
   }
 
-  async login(loginDto: LoginDto){
+  async  register(registerUserDto: RegisterUserDto): Promise<LoginResponse>{
+
+    const user = await this.create(registerUserDto)
+
+    return  {
+      user: user,
+      token: this.getJwtToken({id:user._id})
+    }
+  }
+
+  async login(loginDto: LoginDto): Promise<LoginResponse>{
     const {email, password} = loginDto;
 
     const user = await this.userModel.findOne({email});
     if(!user){
       throw new UnauthorizedException('Not valid credentials - Email');
     }
-
     if(!bcryptjs.compareSync(password, user.password)){
       throw new UnauthorizedException('Not valid credentials - Password');
     }
 
     const {password:_, ...rest} = user.toJSON();
 
-
-
     return {
       user: rest,
       token: this.getJwtToken({id: user.id}),
     }
-    /**
-     * User{id, name, roles}
-     *Token ->
-     *
-     */
+
   }
 
   findAll() {
