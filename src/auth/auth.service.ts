@@ -80,6 +80,12 @@ export class AuthService {
     return `This action returns a #${id} auth`;
   }
 
+  async findUserById(id:string){
+    const user = await this.userModel.findById(id);
+    const {password, ...rest} = user.toJSON();
+    return rest
+  }
+
   update(id: number, updateAuthDto: UpdateAuthDto) {
     return `This action updates a #${id} auth`;
   }
